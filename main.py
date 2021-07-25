@@ -188,13 +188,13 @@ class StatusUpdater(QObject):
             print(e)
             self.serviceStatus["aiStatus"] = ["Ai Server: Failed", "red", 0]
 
-#    @pyqtSlot(str)
-#    def toggle_arduino(self, serverIp):
-#        self.serviceStatus["arduinoStatus"] = ["ARDUINO SERVICE: LOADING", "orange"]
-#        arduinoThread = threading.Thread(target=arduinoHandler, args=(serverIp,))
-#        arduinoThread.setDaemon(True)
-#        arduinoThread.start()
-#        self.serviceStatus["arduinoStatus"] = ["ARDUINO SERVICE: ONLINE", "green", 1]
+    @pyqtSlot(str)
+    def toggle_arduino(self, serverIp):
+        self.serviceStatus["arduinoStatus"] = ["ARDUINO SERVICE: LOADING", "orange"]
+        arduinoThread = threading.Thread(target=arduinoHandler, args=(serverIp,))
+        arduinoThread.setDaemon(True)
+        arduinoThread.start()
+        self.serviceStatus["arduinoStatus"] = ["ARDUINO SERVICE: ONLINE", "green", 1]
 
     @pyqtSlot(str)
     def toggle_video(self, serverIp):
@@ -219,6 +219,36 @@ class StatusUpdater(QObject):
         del widget
         time.sleep(1)
         sys.exit()
+
+
+# FILL IN THE CODE HERE!
+def arduino_open_door():
+    print("DOOR OPEN")
+    time.sleep(5) # remove this. this is to emulate a door opening
+    pass
+
+def arduino_close_door():
+    print("DOOR CLOSE")
+    time.sleep(5) # remove this. this is to emulate a door closing
+    pass
+
+def arduinoHandler(serverIp):
+    while True:
+        try:
+            time.sleep(1)
+            with urllib.request.urlopen(serverIp + "/open_door") as url:
+                if url.status == 200:
+                    res = url.read().decode('utf-8')
+                    if res == "True":
+                        arduino_open_door()
+                        time.sleep(5)
+                        arduino_close_door()
+                    else:
+                        pass
+                else:
+                    raise Exception(url.status)
+        except Exception as e:
+            print(e)
 
 
 if __name__ == '__main__':

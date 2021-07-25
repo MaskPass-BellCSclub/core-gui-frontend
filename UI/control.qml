@@ -640,6 +640,7 @@ ApplicationWindow {
     Connections {
         target: startArduinoButton
         function onClicked(){
+            statusUpdater.toggle_arduino(cameraServer.displayText);
         }
     }
     Connections {
