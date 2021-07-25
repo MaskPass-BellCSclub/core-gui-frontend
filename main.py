@@ -55,7 +55,7 @@ def status_check():
 def video_feed():
     return Response(generate_frame(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-    
+#======================================
 class videoThread(QThread):
     changePixmap = pyqtSignal(QImage)
 
@@ -75,7 +75,7 @@ class videoThread(QThread):
                 p = convertToQtFormat.scaled(640*camMult, 480*camMult, Qt.KeepAspectRatio)
                 self.changePixmap.emit(p)
 
-
+#======================================
 class CameraDisplayNew(QWidget):
     def __init__(self):
         super().__init__()
@@ -112,7 +112,7 @@ class CameraDisplayNew(QWidget):
         self.statusText[2] = 0
         event.accept()
 
-
+#======================================
 class StatusUpdater(QObject):
     def __init__(self):
         QObject.__init__(self)
@@ -220,42 +220,32 @@ class StatusUpdater(QObject):
         time.sleep(1)
         sys.exit()
 
+#======================================
 
 def sendToArduino(sendStr):
     global ser
-    ser.write(sendStr.encode('utf-8')) # change for Python3
+    ser.write(sendStr.encode('utf-8'))
 
-
-#======================================
-
-def recvFromArduino():
+def recieveFromArduino():
     global ser
     global startMarker, endMarker
 
     ck = ""
-    x = "z" # any value that is not an end- or startMarker
-    byteCount = -1 # to allow for the fact that the last increment will be one too many
+    x = "z"
+    byteCount = -1 
 
-    # wait for the start character
     while  ord(x) != startMarker: 
         x = ser.read()
 
-    # save data until the end marker is found
     while ord(x) != endMarker:
         if ord(x) != startMarker:
-            ck = ck + x.decode("utf-8") # change for Python3
+            ck = ck + x.decode("utf-8")
             byteCount += 1
         x = ser.read()
 
     return(ck)
 
-
-#============================
-
 def waitForArduino():
-
-    # wait until the Arduino sends 'Arduino Ready' - allows time for Arduino reset
-    # it also ensures that any bytes left over from a previous message are discarded
 
     global ser
     global startMarker, endMarker
@@ -266,16 +256,12 @@ def waitForArduino():
         while ser.inWaiting() == 0:
             pass
 
-        msg = recvFromArduino()
+        msg = recieveFromArduino()
 
-        print (msg) # python3 requires parenthesis
+        print (msg)
         print ()
 
-
-
-# FILL IN THE CODE HERE!
 def arduino_open_door(myI):
-    # print("DOOR OPEN")
     waitingForReply = False
     if waitingForReply == False:
 
@@ -283,18 +269,16 @@ def arduino_open_door(myI):
         waitingForReply = True
 
         if waitingForReply == True:
-            
+
             while ser.inWaiting() == 0:
                 pass
 
-            dataRecvd = recvFromArduino()
+            dataRecieved = recieveFromArduino()
             waitingForReply = False
 
         time.sleep(5)
 
-
 def arduino_close_door(myI):
-    # print("DOOR CLOSE")
     waitingForReply = False
     if waitingForReply == False:
         sendToArduino(myI)
@@ -305,7 +289,7 @@ def arduino_close_door(myI):
             while ser.inWaiting() == 0:
                 pass
 
-            dataRecvd = recvFromArduino()
+            dataRecieved = recieveFromArduino()
             waitingForReply = False
 
         time.sleep(5)
@@ -350,7 +334,7 @@ def arduinoHandler(serverIp, arduinoStatus):
             arduinoStatus[2] = 0
             print(e)
 
-
+#======================================
 
 if __name__ == '__main__':
 
