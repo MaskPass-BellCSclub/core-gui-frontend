@@ -106,9 +106,7 @@ class CameraDisplayNew(QWidget):
         self.show()
         
     def closeEvent(self, event):
-        if self.statusText:
-            self.statusText[0] = "VIDEO DISPLAY: EXITED"
-            self.statusText[1] = "red"
+        self.statusText = ["VIDEO DISPLAY: EXITED", "red"]
         event.accept()
 
 
@@ -198,11 +196,11 @@ class StatusUpdater(QObject):
 
     @pyqtSlot(str)
     def toggle_video(self, serverIp):
-        self.serviceStatus["aiStatus"] = ["Video Display: Loading", "orange", 0]
+        self.serviceStatus["videoStatus"] = ["Video Display: Loading", "orange", 0]
         self.cameraService = CameraDisplayNew()
         self.cameraService.initUI(serverIp, statusText = self.serviceStatus["videoStatus"])
         self.cameraService.show()
-        self.serviceStatus["aiStatus"] = ["Video Display: Online", "green", 1]
+        self.serviceStatus["videoStatus"] = ["Video Display: Online", "green", 1]
 
     @pyqtSlot(str)
     def stop_ai_server(self, serverIp):
