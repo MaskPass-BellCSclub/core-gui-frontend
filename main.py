@@ -222,10 +222,12 @@ class StatusUpdater(QObject):
 
 #======================================
 
+#sends the a message to the arduino
 def sendToArduino(sendStr):
     global ser
     ser.write(sendStr.encode('utf-8'))
 
+#receives a message from arduino
 def recieveFromArduino():
     global ser
     global startMarker, endMarker
@@ -233,23 +235,29 @@ def recieveFromArduino():
     ck = ""
     x = "z"
     byteCount = -1 
-
+    
+    #waits to receive the start marker of the return message from the arduino
     while  ord(x) != startMarker: 
         x = ser.read()
-
+    
+    #while the end marker has not been reached, reads in the message being received and stores it in ck
     while ord(x) != endMarker:
         if ord(x) != startMarker:
             ck = ck + x.decode("utf-8")
             byteCount += 1
         x = ser.read()
-
+    
+    #returns the message
     return(ck)
 
+
+#waits for the arduino to send start up message, makes sure the arduino is ready to receive commands
 def waitForArduino():
 
     global ser
     global startMarker, endMarker
-
+    
+    #waits for the message incoming from serial to be "arduino is ready"
     msg = ""
     while msg.find("Arduino is ready") == -1:
 
@@ -261,15 +269,18 @@ def waitForArduino():
         print (msg)
         print ()
 
+#tells the arduino to open the door
 def arduino_open_door(myI):
+    
     waitingForReply = False
+    
     if waitingForReply == False:
-
+        #sends the command to the arduino
         sendToArduino(myI)
         waitingForReply = True
-
+       
         if waitingForReply == True:
-
+            #waits for a confirmation reply message from the arduino to come through the serial
             while ser.inWaiting() == 0:
                 pass
 
@@ -277,22 +288,25 @@ def arduino_open_door(myI):
             waitingForReply = False
 
         time.sleep(5)
-
+        
 def arduino_close_door(myI):
+     
     waitingForReply = False
+    
     if waitingForReply == False:
+        #sends the command to the arduino
         sendToArduino(myI)
         waitingForReply = True
-
+       
         if waitingForReply == True:
-
+            #waits for a confirmation reply message from the arduino to come through the serial
             while ser.inWaiting() == 0:
                 pass
-
+    
             dataRecieved = recieveFromArduino()
             waitingForReply = False
-
-        time.sleep(5)
+            
+            time.sleep(5)
 
 def arduinoHandler(serverIp, arduinoStatus):
     import serial
