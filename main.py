@@ -229,20 +229,23 @@ class StatusUpdater(QObject):
     def stop_ai_server(self, serverIp):
         with urllib.request.urlopen(serverIp + "/stop") as url:
             pass
-        self.aiText = ["Ai Server: Offline", "red", 0]
+        self.aiText = ["Ai Server: Stopped", "red", 0]
 
     @pyqtSlot()
     def exit_app(self):
+        global app
+        global widget
+        del app
+        del widget
         time.sleep(1)
         sys.exit()
-
-
-
 
 
 if __name__ == '__main__':
 
     import sys
+    global app
+    global widget
 
     app = QGuiApplication(sys.argv)
     widget = QApplication(sys.argv)
