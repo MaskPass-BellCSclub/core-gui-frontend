@@ -9,6 +9,7 @@ ApplicationWindow {
     height: 250
     title: "MaskPass Control Panel"
 
+// variable declarations for statusUpdater
     property QtObject statusUpdater
 
     property string cameraText: ""
@@ -36,6 +37,7 @@ ApplicationWindow {
             anchors.fill: parent
             implicitHeight: getHeight() + 10
 
+            // function to getHeight for scrolling
             function getHeight(){
                 var h
                 h = 0
@@ -46,6 +48,8 @@ ApplicationWindow {
                 return h
             }
 
+            // layout
+            // header
             Label{
                 id: cctitle
                 width: parent.width-20
@@ -59,7 +63,6 @@ ApplicationWindow {
                 text: "MaskPass Control Panel"
             }
 
-
             Rectangle{
                 id: headerLine
                 width: parent.width-20
@@ -71,6 +74,7 @@ ApplicationWindow {
                 anchors.topMargin: 10
             }
 
+            // body
             TextField{
                 id: cameraServer
                 width: parent.width-20
@@ -104,6 +108,7 @@ ApplicationWindow {
                 font.family: "Courier"
                 font.pointSize: 8
 
+                // for hover and click effects
                 scale: state === "Pressed" ? 0.96 : 1.0
                 onEnabledChanged: state = ""
                 signal clicked
@@ -186,7 +191,7 @@ ApplicationWindow {
                 font.family: "Courier"
                 font.pointSize: 8
 
-                
+                // for hover and click effects
                 scale: state === "Pressed" ? 0.96 : 1.0
                 onEnabledChanged: state = ""
                 signal clicked
@@ -255,7 +260,7 @@ ApplicationWindow {
                 font.family: "Courier"
                 font.pointSize: 8
 
-                
+                // for hover and click effects
                 scale: state === "Pressed" ? 0.96 : 1.0
                 onEnabledChanged: state = ""
                 signal clicked
@@ -339,7 +344,7 @@ ApplicationWindow {
                 font.family: "Courier"
                 font.pointSize: 8
 
-                
+                // for hover and click effects
                 scale: state === "Pressed" ? 0.96 : 1.0
                 onEnabledChanged: state = ""
                 signal clicked
@@ -422,7 +427,7 @@ ApplicationWindow {
                 font.family: "Courier"
                 font.pointSize: 8
 
-                
+                // for hover and click effects
                 scale: state === "Pressed" ? 0.96 : 1.0
                 onEnabledChanged: state = ""
                 signal clicked
@@ -510,6 +515,7 @@ ApplicationWindow {
                     text: "EXIT"
                 }
 
+                // for hover and click effects
                 scale: state === "Pressed" ? 0.96 : 1.0
                 onEnabledChanged: state = ""
                 signal clicked
@@ -590,6 +596,7 @@ ApplicationWindow {
                 text: "Status"
             }
 
+            // footer
             Rectangle{
                 id: status
                 width: parent.width-20
@@ -609,7 +616,9 @@ ApplicationWindow {
         }
     }
 
+    // connections to main.py
 
+    // update status text
     Connections {
         target: statusUpdater
         function onStatusUpdated(status){
@@ -625,6 +634,8 @@ ApplicationWindow {
             readyColor = status["readyStatus"][1]
         }
     }
+
+    // button connections
     Connections {
         target: startCameraButton
         function onClicked(){

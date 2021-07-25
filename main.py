@@ -11,6 +11,8 @@ import urllib
 import json
 import serial
 
+#=========Initialize Flask Server=========
+
 camMult = 2
 
 flaskServer = Flask(__name__)
@@ -55,7 +57,7 @@ def status_check():
 def video_feed():
     return Response(generate_frame(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-#======================================
+#=========Process MJPEG=========
 class videoThread(QThread):
     changePixmap = pyqtSignal(QImage)
 
@@ -75,8 +77,8 @@ class videoThread(QThread):
                 p = convertToQtFormat.scaled(640*camMult, 480*camMult, Qt.KeepAspectRatio)
                 self.changePixmap.emit(p)
 
-#======================================
-class CameraDisplayNew(QWidget):
+#=========Initialize Camera Display=========
+class CameraDisplay(QWidget):
     def __init__(self):
         super().__init__()
         self.statusText = []
@@ -112,7 +114,7 @@ class CameraDisplayNew(QWidget):
         self.statusText[2] = 0
         event.accept()
 
-#======================================
+#=========Initialize Status Updater Object=========
 class StatusUpdater(QObject):
     def __init__(self):
         QObject.__init__(self)
@@ -143,6 +145,7 @@ class StatusUpdater(QObject):
             self.statusUpdater()
             time.sleep(1)
 
+# Toggleables
     @pyqtSlot()
     def toggle_camera(self):
         self.serviceStatus["cameraStatus"] = ["CAMERA: LOADING", "orange", 0]
@@ -199,7 +202,7 @@ class StatusUpdater(QObject):
     @pyqtSlot(str)
     def toggle_video(self, serverIp):
         self.serviceStatus["videoStatus"] = ["Video Display: Loading", "orange", 0]
-        self.cameraService = CameraDisplayNew()
+        self.cameraService = CameraDisplay()
         self.cameraService.initUI(serverIp, statusText = self.serviceStatus["videoStatus"])
         self.cameraService.show()
         self.serviceStatus["videoStatus"] = ["Video Display: Online", "green", 1]
@@ -220,7 +223,7 @@ class StatusUpdater(QObject):
         time.sleep(1)
         sys.exit()
 
-#======================================
+#=========Arduino Handler==========
 
 def sendToArduino(sendStr):
     global ser
@@ -334,7 +337,7 @@ def arduinoHandler(serverIp, arduinoStatus):
             arduinoStatus[2] = 0
             print(e)
 
-#======================================
+#=========main=========
 
 if __name__ == '__main__':
 
