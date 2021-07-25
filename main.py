@@ -85,7 +85,7 @@ class CameraDisplayNew(QWidget):
         self.label.setPixmap(QPixmap.fromImage(image))
 
     def initUI(self, cameraIp, statusText = None):
-        self.statusText = statusText[0]
+        self.statusText = statusText
         self.setWindowTitle("AI Camera Stream")
         self.resize(1800, 1200)
         # create a label
@@ -106,7 +106,7 @@ class CameraDisplayNew(QWidget):
         self.show()
         
     def closeEvent(self, event):
-        self.statusText = ["VIDEO DISPLAY: EXITED", "red"]
+        self.statusText = ["VIDEO DISPLAY: EXITED", "red", 0]
         event.accept()
 
 
@@ -189,10 +189,9 @@ class StatusUpdater(QObject):
     @pyqtSlot(str)
     def toggle_arduino(self, serverIp):
         self.serviceStatus["arduinoStatus"] = ["ARDUINO SERVICE: LOADING", "orange"]
-        arduinoThread = threading.Thread(target=arduinoHandler, args=(serverIp,))
+        arduinoThread = threading.Thread(target=arduinoHandler, args=(serverIp, self.serviceStatus["arduinoStatus"]))
         arduinoThread.setDaemon(True)
         arduinoThread.start()
-        self.serviceStatus["arduinoStatus"] = ["ARDUINO SERVICE: ONLINE", "green", 1]
 
     @pyqtSlot(str)
     def toggle_video(self, serverIp):
@@ -308,7 +307,7 @@ def arduino_close_door(myI):
 
         time.sleep(5)
 
-def arduinoHandler(serverIp):
+def arduinoHandler(serverIp, arduinoStatus):
     import serial
     global startMarker, endMarker, ser
     startMarker = 60
@@ -321,6 +320,8 @@ def arduinoHandler(serverIp):
             time.sleep(1)
             with urllib.request.urlopen(serverIp + "/open_door") as url:
                 if url.status == 200:
+                    if arduinoStatus[2] != 1:
+                        arduinoStatus = ["ARDUINO SERVICE: ONLINE", "green", 1]
                     res = url.read().decode('utf-8')
                     if res == "True":
                         arduino_open_door(0)
