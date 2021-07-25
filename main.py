@@ -221,18 +221,103 @@ class StatusUpdater(QObject):
         sys.exit()
 
 
-# FILL IN THE CODE HERE!
-def arduino_open_door():
-    print("DOOR OPEN")
-    time.sleep(5) # remove this. this is to emulate a door opening
-    pass
+def sendToArduino(sendStr):
+    global ser
+    ser.write(sendStr.encode('utf-8')) # change for Python3
 
-def arduino_close_door():
-    print("DOOR CLOSE")
-    time.sleep(5) # remove this. this is to emulate a door closing
-    pass
+
+#======================================
+
+def recvFromArduino():
+    global ser
+    global startMarker, endMarker
+
+    ck = ""
+    x = "z" # any value that is not an end- or startMarker
+    byteCount = -1 # to allow for the fact that the last increment will be one too many
+
+    # wait for the start character
+    while  ord(x) != startMarker: 
+        x = ser.read()
+
+    # save data until the end marker is found
+    while ord(x) != endMarker:
+        if ord(x) != startMarker:
+            ck = ck + x.decode("utf-8") # change for Python3
+            byteCount += 1
+        x = ser.read()
+
+    return(ck)
+
+
+#============================
+
+def waitForArduino():
+
+    # wait until the Arduino sends 'Arduino Ready' - allows time for Arduino reset
+    # it also ensures that any bytes left over from a previous message are discarded
+
+    global ser
+    global startMarker, endMarker
+
+    msg = ""
+    while msg.find("Arduino is ready") == -1:
+
+        while ser.inWaiting() == 0:
+            pass
+
+        msg = recvFromArduino()
+
+        print (msg) # python3 requires parenthesis
+        print ()
+
+
+
+# FILL IN THE CODE HERE!
+def arduino_open_door(myI):
+    # print("DOOR OPEN")
+    waitingForReply = False
+    if waitingForReply == False:
+
+        sendToArduino(myI)
+        waitingForReply = True
+
+        if waitingForReply == True:
+            
+            while ser.inWaiting() == 0:
+                pass
+
+            dataRecvd = recvFromArduino()
+            waitingForReply = False
+
+        time.sleep(5)
+
+
+def arduino_close_door(myI):
+    # print("DOOR CLOSE")
+    waitingForReply = False
+    if waitingForReply == False:
+        sendToArduino(myI)
+        waitingForReply = True
+
+        if waitingForReply == True:
+
+            while ser.inWaiting() == 0:
+                pass
+
+            dataRecvd = recvFromArduino()
+            waitingForReply = False
+
+        time.sleep(5)
 
 def arduinoHandler(serverIp):
+    import serial
+    global startMarker, endMarker, ser
+    startMarker = 60
+    endMarker = 62
+    serPort = "COM8"
+    baudRate = 9600
+    ser = serial.Serial(serPort, baudRate)
     while True:
         try:
             time.sleep(1)
@@ -240,9 +325,9 @@ def arduinoHandler(serverIp):
                 if url.status == 200:
                     res = url.read().decode('utf-8')
                     if res == "True":
-                        arduino_open_door()
+                        arduino_open_door(0)
                         time.sleep(5)
-                        arduino_close_door()
+                        arduino_close_door(1)
                     else:
                         pass
                 else:
@@ -251,11 +336,13 @@ def arduinoHandler(serverIp):
             print(e)
 
 
+
 if __name__ == '__main__':
 
     import sys
     global app
     global widget
+
 
     app = QGuiApplication(sys.argv)
     widget = QApplication(sys.argv)
