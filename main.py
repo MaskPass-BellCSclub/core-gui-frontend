@@ -9,7 +9,7 @@ import threading
 import multiprocessing
 import urllib
 import json
-import time
+import serial
 
 camMult = 2
 
@@ -79,6 +79,7 @@ class videoThread(QThread):
 class CameraDisplayNew(QWidget):
     def __init__(self):
         super().__init__()
+        self.statusText = []
 
     @pyqtSlot(QImage)
     def setImage(self, image):
@@ -106,7 +107,9 @@ class CameraDisplayNew(QWidget):
         self.show()
         
     def closeEvent(self, event):
-        self.statusText = ["VIDEO DISPLAY: EXITED", "red", 0]
+        self.statusText[0] = "Video Display: Exited"
+        self.statusText[1] = "red"
+        self.statusText[2] = 0
         event.accept()
 
 
@@ -133,7 +136,7 @@ class StatusUpdater(QObject):
 
     def _bootUp(self):
         while True:
-            if self.serviceStatus["cameraStatus"][2] * self.serviceStatus["aiStatus"][2] * self.serviceStatus["arduinoStatus"][2] * self.serviceStatus["videoStatus"][2] != 0:
+            if (self.serviceStatus["cameraStatus"][2] * self.serviceStatus["aiStatus"][2] * self.serviceStatus["arduinoStatus"][2] * self.serviceStatus["videoStatus"][2]) != 0:
                 self.serviceStatus["readyStatus"] = ["READY", "green"]
             else:
                 self.serviceStatus["readyStatus"] = ["NOT READY", "red"]
@@ -188,7 +191,7 @@ class StatusUpdater(QObject):
 
     @pyqtSlot(str)
     def toggle_arduino(self, serverIp):
-        self.serviceStatus["arduinoStatus"] = ["ARDUINO SERVICE: LOADING", "orange"]
+        self.serviceStatus["arduinoStatus"] = ["ARDUINO SERVICE: LOADING", "orange", 0]
         arduinoThread = threading.Thread(target=arduinoHandler, args=(serverIp, self.serviceStatus["arduinoStatus"]))
         arduinoThread.setDaemon(True)
         arduinoThread.start()
@@ -314,14 +317,24 @@ def arduinoHandler(serverIp, arduinoStatus):
     endMarker = 62
     serPort = "COM8"
     baudRate = 9600
-    ser = serial.Serial(serPort, baudRate)
+    try:
+        ser = serial.Serial(serPort, baudRate)
+    except Exception as e:
+        #arduinoStatus = ["Arduino Server: Failed", "red", 0]
+        arduinoStatus[0] = "Arduino Service: Failed"
+        arduinoStatus[1] = "red"
+        arduinoStatus[2] = 0
+        print(e) 
+
     while True:
         try:
             time.sleep(1)
             with urllib.request.urlopen(serverIp + "/open_door") as url:
+                if arduinoStatus[2] != 1:
+                    arduinoStatus[0] = "Arduino Service: Online"
+                    arduinoStatus[1] = "green"
+                    arduinoStatus[2] = 1
                 if url.status == 200:
-                    if arduinoStatus[2] != 1:
-                        arduinoStatus = ["ARDUINO SERVICE: ONLINE", "green", 1]
                     res = url.read().decode('utf-8')
                     if res == "True":
                         arduino_open_door(0)
@@ -332,6 +345,9 @@ def arduinoHandler(serverIp, arduinoStatus):
                 else:
                     raise Exception(url.status)
         except Exception as e:
+            arduinoStatus[0] = "Arduino Service: Failed"
+            arduinoStatus[1] = "red"
+            arduinoStatus[2] = 0
             print(e)
 
 
