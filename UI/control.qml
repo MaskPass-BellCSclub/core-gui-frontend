@@ -7,7 +7,24 @@ ApplicationWindow {
     visible: true
     width: 300
     height: 250
-    title: "Control Panel"
+    title: "MaskPass Control Panel"
+
+    property QtObject statusUpdater
+
+    property string cameraText: ""
+    property string cameraColor: ""
+
+    property string aiText: ""
+    property string aiColor: ""
+
+    property string arduinoText: ""
+    property string arduinoColor: ""
+
+    property string videoText: ""
+    property string videoColor: ""
+
+    property string readyText: ""
+    property string readyColor: ""
 
     ScrollView {
         anchors.fill: parent
@@ -39,7 +56,7 @@ ApplicationWindow {
                 horizontalAlignment: Text.AlignHCenter
                 font.family: "Courier"
                 font.pointSize: 12
-                text: "Control Panel"
+                text: "MaskPass Control Panel"
             }
 
 
@@ -61,7 +78,8 @@ ApplicationWindow {
                 anchors.topMargin: 10
                 anchors.horizontalCenter: parent.horizontalCenter
             
-                placeholderText: qsTr("Enter Camera Server")
+                placeholderText: qsTr("Enter AI/Arduino Server")
+                text: "http://mc.ai1to1.com:5000"
 
                 background: Rectangle {
                     implicitWidth: 100
@@ -82,7 +100,7 @@ ApplicationWindow {
                 anchors.topMargin: 10
                 anchors.horizontalCenter: parent.horizontalCenter
 
-                text: "Select Camera Server"
+                text: "Start Camera Server"
                 font.family: "Courier"
                 font.pointSize: 8
 
@@ -139,7 +157,6 @@ ApplicationWindow {
                         startCameraButton.state="";
                     }
                 }
-                onClicked: cameraState.readOnly = true
             }
 
             Text{
@@ -153,8 +170,8 @@ ApplicationWindow {
                 font.family: "Courier"
                 font.pointSize: 10
                 font.capitalization: Font.AllUppercase
-                text: "Camera: Online"
-                color: "green"
+                text: cameraText
+                color: cameraColor
             }
 
             RoundButton {
@@ -223,6 +240,76 @@ ApplicationWindow {
                         startAiButton.state="";
                     }
                 }
+                onClicked: {cameraServer.readOnly = true}
+            }
+
+            RoundButton {
+                id: stopAiButton
+                width: parent.width-20
+                height: 35
+                anchors.top: startAiButton.bottom
+                anchors.topMargin: 10
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                text: "Stop AI Server"
+                font.family: "Courier"
+                font.pointSize: 8
+
+                
+                scale: state === "Pressed" ? 0.96 : 1.0
+                onEnabledChanged: state = ""
+                signal clicked
+
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: 100
+                        easing.type: Easing.InOutQuad
+                    }
+                }
+
+                states: [
+                    State {
+                        name: "Hovering"
+                        PropertyChanges {
+                            target: stopAiButton
+                            opacity: 0.3
+                        }
+                    },
+                    State {
+                        name: "Pressed"
+                        PropertyChanges {
+                            target: stopAiButton
+                            opacity: 1.0
+                        }
+                    }
+                ]
+
+                transitions: [
+                    Transition {
+                        from: ""; to: "Hovering"
+                        PropertyAnimation { duration: 100 }
+                    },
+                    Transition {
+                        from: "*"; to:"Pressed" 
+                        PropertyAnimation { duration: 100 }
+                    }
+                ]
+
+                MouseArea {
+                    hoverEnabled: true
+                    anchors.fill: stopAiButton
+                    onEntered: { stopAiButton.state='Hovering'}
+                    onExited: { stopAiButton.state=''}
+                    onPressed: { stopAiButton.state='Pressed'}
+                    onClicked: { stopAiButton.clicked();}
+                    onReleased: {
+                        if (containsMouse)
+                        stopAiButton.state="Hovering";
+                        else
+                        stopAiButton.state="";
+                    }
+                }
+                onClicked: { cameraServer.readOnly = false;}
             }
 
             Text{
@@ -230,14 +317,14 @@ ApplicationWindow {
                 width: parent.width-20
                 height: 24
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: startAiButton.bottom
+                anchors.top: stopAiButton.bottom
                 anchors.topMargin: 15
                 horizontalAlignment: Text.AlignLeft
                 font.family: "Courier"
                 font.pointSize: 10
                 font.capitalization: Font.AllUppercase
-                text: "AI Server: Online"
-                color: "green"
+                text: aiText
+                color: aiColor
             }
 
             RoundButton {
@@ -248,7 +335,7 @@ ApplicationWindow {
                 anchors.topMargin: 10
                 anchors.horizontalCenter: parent.horizontalCenter
 
-                text: "Send Start Command to AI Server"
+                text: "Start Arduino Service"
                 font.family: "Courier"
                 font.pointSize: 8
 
@@ -319,8 +406,8 @@ ApplicationWindow {
                 font.family: "Courier"
                 font.pointSize: 10
                 font.capitalization: Font.AllUppercase
-                text: "Arduino Server: Online"
-                color: "green"
+                text: arduinoText
+                color: arduinoColor
             }
 
             RoundButton {
@@ -402,12 +489,13 @@ ApplicationWindow {
                 font.family: "Courier"
                 font.pointSize: 10
                 font.capitalization: Font.AllUppercase
-                text: "Video Display: Exited"
-                color: "red"
+                text: videoText
+                color: videoColor
             }
 
             Rectangle{
-                id: exitButton
+                id: exitButtonFrame
+
                 width: parent.width-20
                 height: 24
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -437,14 +525,14 @@ ApplicationWindow {
                     State {
                         name: "Hovering"
                         PropertyChanges {
-                            target: exitButton
+                            target: exitButtonFrame
                             opacity: 0.5
                         }
                     },
                     State {
                         name: "Pressed"
                         PropertyChanges {
-                            target: exitButton
+                            target: exitButtonFrame
                             opacity: 1.0
                         }
                     }
@@ -462,17 +550,18 @@ ApplicationWindow {
                 ]
 
                 MouseArea {
+                    id: exitButton
                     hoverEnabled: true
-                    anchors.fill: exitButton
-                    onEntered: { exitButton.state='Hovering'}
-                    onExited: { exitButton.state=''}
-                    onPressed: { exitButton.state='Pressed'}
-                    onClicked: { exitButton.clicked();}
+                    anchors.fill: exitButtonFrame
+                    onEntered: { exitButtonFrame.state='Hovering'}
+                    onExited: { exitButtonFrame.state=''}
+                    onPressed: { exitButtonFrame.state='Pressed'}
+                    onClicked: { exitButtonFrame.clicked();}
                     onReleased: {
                         if (containsMouse)
-                        exitButton.state="Hovering";
+                        exitButtonFrame.state="Hovering";
                         else
-                        exitButton.state="";
+                        exitButtonFrame.state="";
                     }
                 }
             }
@@ -484,7 +573,7 @@ ApplicationWindow {
                 border.color: "black"
                 border.width: 1
                 anchors.horizontalCenter: parent.horizontalCenter
-                anchors.top: exitButton.bottom
+                anchors.top: exitButtonFrame.bottom
                 anchors.topMargin: 10
             }
 
@@ -508,16 +597,77 @@ ApplicationWindow {
                 anchors.horizontalCenter: parent.horizontalCenter
                 anchors.top: statusText.bottom
                 anchors.topMargin: 10
-                color: "red"
+                color: readyColor
                 Text{
                     anchors.centerIn: parent
                     horizontalAlignment: Text.AlignHLeft
                     font.family: "Courier"
                     font.pointSize: 10
-                    text: "NOT READY"
+                    text: readyText
                 }
             }
+        }
+    }
 
+
+    Connections {
+        target: statusUpdater
+
+        function onCameraUpdated(msg0){
+            cameraText = msg0[0];
+            cameraColor = msg0[1];
+        }
+        function onAiUpdated(msg1){
+            aiText = msg1[0];
+            aiColor = msg1[1];
+        }
+        function onArduinoUpdated(msg2){
+            arduinoText = msg2[0];
+            arduinoColor = msg2[1];
+        }
+        function onVideoUpdated(msg3){
+            videoText = msg3[0];
+            videoColor = msg3[1];
+        }
+        function onReadyUpdated(msg4){
+            readyText = msg4[0];
+            readyColor = msg4[1];
+        }
+    }
+    Connections {
+        target: startCameraButton
+        function onClicked(){
+            statusUpdater.toggle_camera();
+        }
+    }
+    Connections {
+        target: startAiButton
+        function onClicked(){
+            statusUpdater.toggle_ai(cameraServer.displayText);
+        }
+    }
+    Connections {
+        target: startArduinoButton
+        function onClicked(){
+        }
+    }
+    Connections {
+        target: startVideoButton
+        function onClicked(){
+            statusUpdater.toggle_video(cameraServer.displayText);
+        }
+    }
+    Connections {
+        target: stopAiButton
+        function onClicked(){
+            statusUpdater.stop_ai_server(cameraServer.displayText);
+        }
+    }
+
+    Connections {
+        target: exitButton
+        function onClicked(){
+            statusUpdater.exit_app();
         }
     }
 }
