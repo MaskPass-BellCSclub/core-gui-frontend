@@ -612,26 +612,17 @@ ApplicationWindow {
 
     Connections {
         target: statusUpdater
-
-        function onCameraUpdated(msg0){
-            cameraText = msg0[0];
-            cameraColor = msg0[1];
-        }
-        function onAiUpdated(msg1){
-            aiText = msg1[0];
-            aiColor = msg1[1];
-        }
-        function onArduinoUpdated(msg2){
-            arduinoText = msg2[0];
-            arduinoColor = msg2[1];
-        }
-        function onVideoUpdated(msg3){
-            videoText = msg3[0];
-            videoColor = msg3[1];
-        }
-        function onReadyUpdated(msg4){
-            readyText = msg4[0];
-            readyColor = msg4[1];
+        function onStatusUpdated(status){
+            cameraText = status["cameraStatus"][0]
+            cameraColor = status["cameraStatus"][1]
+            aiText = status["aiStatus"][0]
+            aiColor = status["aiStatus"][1]
+            arduinoText = status["arduinoStatus"][0]
+            arduinoColor = status["arduinoStatus"][1]
+            videoText = status["videoStatus"][0]
+            videoColor = status["videoStatus"][1]
+            readyText = status["readyStatus"][0]
+            readyColor = status["readyStatus"][1]
         }
     }
     Connections {

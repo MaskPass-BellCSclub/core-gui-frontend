@@ -115,39 +115,18 @@ class CameraDisplayNew(QWidget):
 class StatusUpdater(QObject):
     def __init__(self):
         QObject.__init__(self)
-        self.cameraText = ["Camera: Offline", "red", 0]
-        self.aiText = ["Ai Server: Offline", "red", 0]
-        self.arduinoText = ["Arduino Service: Offline", "red", 0]
-        self.videoText = ["Video Display: Offline", "red", 0]
-        self.readyText = ["NOT READY", "red"]
+        self.serviceStatus = {
+            "cameraStatus": ["Camera: Offline", "red", 0],
+            "aiStatus": ["Ai Server: Offline", "red", 0],
+            "arduinoStatus": ["Arduino Service: Offline", "red", 0],
+            "videoStatus": ["Video Display: Offline", "red", 0],
+            "readyStatus": ["NOT READY", "red"]
+        }
 
-    cameraUpdated = pyqtSignal(list, arguments = ['cameraUpdater'])
-    aiUpdated = pyqtSignal(list, arguments = ['aiUpdater'])
-    arduinoUpdated = pyqtSignal(list, arguments = ['arduinoUpdater'])
-    videoUpdated = pyqtSignal(list, arguments = ['videoUpdater'])
-    readyUpdated = pyqtSignal(list, arguments = ['readyUpdater'])
+    statusUpdated = pyqtSignal(QVariant, arguments = ['statusUpdater'])
 
-    def updater(self):
-        self.cameraUpdater()
-        self.aiUpdater()
-        self.arduinoUpdater()
-        self.videoUpdater()
-        self.readyUpdater()
-
-    def cameraUpdater(self):
-        self.cameraUpdated.emit(self.cameraText)
-
-    def aiUpdater(self):
-        self.aiUpdated.emit(self.aiText)
-
-    def arduinoUpdater(self):
-        self.arduinoUpdated.emit(self.arduinoText)
-
-    def videoUpdater(self):
-        self.videoUpdated.emit(self.videoText)
-
-    def readyUpdater(self):
-        self.readyUpdated.emit(self.readyText)
+    def statusUpdater(self):
+        self.statusUpdated.emit(self.serviceStatus)
 
     def bootUp(self):
         t_thread = threading.Thread(target=self._bootUp)
@@ -156,16 +135,16 @@ class StatusUpdater(QObject):
 
     def _bootUp(self):
         while True:
-            if self.cameraText[2] * self.aiText[2] * self.arduinoText[2] * self.videoText[2] != 0:
-                self.readyText = ["READY", "green"]
+            if self.serviceStatus["cameraStatus"][2] * self.serviceStatus["aiStatus"][2] * self.serviceStatus["arduinoStatus"][2] * self.serviceStatus["videoStatus"][2] != 0:
+                self.serviceStatus["readyStatus"] = ["READY", "green"]
             else:
-                self.readyText = ["NOT READY", "red"]
-            self.updater()
+                self.serviceStatus["readyStatus"] = ["NOT READY", "red"]
+            self.statusUpdater()
             time.sleep(1)
 
     @pyqtSlot()
     def toggle_camera(self):
-        self.cameraText = ["CAMERA: LOADING", "orange", 0]
+        self.serviceStatus["cameraStatus"] = ["CAMERA: LOADING", "orange", 0]
         try:
             flaskThread = multiprocessing.Process(target=start_flask_server)
             flaskThread.start()
@@ -179,16 +158,16 @@ class StatusUpdater(QObject):
                 except Exception as e:
                     print(e)
                     
-            self.cameraText = ["CAMERA: ONLINE", "green", 1]
+            self.serviceStatus["cameraStatus"] = ["CAMERA: ONLINE", "green", 1]
             
         except Exception as e:
             print(e)
-            self.cameraText = ["CAMERA: FAILED", "red", 0]
+            self.serviceStatus["cameraStatus"] = ["CAMERA: FAILED", "red", 0]
 
 
     @pyqtSlot(str)
     def toggle_ai(self, serverIp):
-        self.aiText = ["Ai Server: Loading", "orange", 0]
+        self.serviceStatus["aiStatus"] = ["Ai Server: Loading", "orange", 0]
         
         try:
             external_ip = urllib.request.urlopen('https://ident.me').read().decode('utf8')
@@ -203,33 +182,34 @@ class StatusUpdater(QObject):
                 if url.status != 200:
                     raise Exception(url.status)
                     
-            self.aiText = ["Ai Server: Online", "green", 1]
+            self.serviceStatus["aiStatus"] = ["Ai Server: Online", "green", 1]
 
         except Exception as e:
             print(e)
-            self.aiText = ["Ai Server: Failed", "red", 0]
+            self.serviceStatus["aiStatus"] = ["Ai Server: Failed", "red", 0]
 
 #    @pyqtSlot(str)
 #    def toggle_arduino(self, serverIp):
-#        self.arduinoText = ["ARDUINO SERVICE: LOADING", "orange"]
+#        self.serviceStatus["arduinoStatus"] = ["ARDUINO SERVICE: LOADING", "orange"]
 #        arduinoThread = threading.Thread(target=arduinoHandler, args=(serverIp,))
 #        arduinoThread.setDaemon(True)
 #        arduinoThread.start()
-#        self.arduinoText = ["ARDUINO SERVICE: ONLINE", "green", 1]
+#        self.serviceStatus["arduinoStatus"] = ["ARDUINO SERVICE: ONLINE", "green", 1]
 
     @pyqtSlot(str)
     def toggle_video(self, serverIp):
-        self.aiText = ["Video Display: Loading", "orange", 0]
+        self.serviceStatus["aiStatus"] = ["Video Display: Loading", "orange", 0]
         self.cameraService = CameraDisplayNew()
-        self.cameraService.initUI(serverIp, statusText = self.videoText)
+        self.cameraService.initUI(serverIp, statusText = self.serviceStatus["videoStatus"])
         self.cameraService.show()
-        self.aiText = ["Video Display: Online", "green", 1]
+        self.serviceStatus["aiStatus"] = ["Video Display: Online", "green", 1]
 
     @pyqtSlot(str)
     def stop_ai_server(self, serverIp):
-        with urllib.request.urlopen(serverIp + "/stop") as url:
-            pass
-        self.aiText = ["Ai Server: Stopped", "red", 0]
+        if self.serviceStatus["aiStatus"][2] == 1:
+            with urllib.request.urlopen(serverIp + "/stop") as url:
+                pass
+        self.serviceStatus["aiStatus"] = ["Ai Server: Stopped", "red", 0]
 
     @pyqtSlot()
     def exit_app(self):
